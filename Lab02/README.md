@@ -134,6 +134,66 @@ rtt min/avg/max/mdev = 24.591/41.396/56.164/11.068 ms, pipe 5, ipg/ewma 11.192/4
 
 ```
 Из двух маршрутов в сеть Spine выбрал маршрут через leaf-2 несмотря на то, что вес маршрута одинаковый
+Изменим вес маршрута, изменив его на интерфайсах к Leaf-2
+```
+spine-1(config-if-Et1)#int eth 2
+spine-1(config-if-Et2)#ip ospf cost 11
+```
+Смотрим таблицу маршрутизации
+```
+spine-1#sho ip route ospf
+
+VRF: default
+Codes: C - connected, S - static, K - kernel,
+       O - OSPF, IA - OSPF inter area, E1 - OSPF external type 1,
+       E2 - OSPF external type 2, N1 - OSPF NSSA external type 1,
+       N2 - OSPF NSSA external type2, B - Other BGP Routes,
+       B I - iBGP, B E - eBGP, R - RIP, I L1 - IS-IS level 1,
+       I L2 - IS-IS level 2, O3 - OSPFv3, A B - BGP Aggregate,
+       A O - OSPF Summary, NG - Nexthop Group Static Route,
+       V - VXLAN Control Service, M - Martian,
+       DH - DHCP client installed default route,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       G  - gRIBI, RC - Route Cache Route
+
+ O        172.16.0.2/32 [110/30] via 172.16.1.1, Ethernet1
+                                 via 172.16.1.3, Ethernet3
+ O        172.16.1.1/32 is directly connected, Ethernet1
+ O        172.16.1.2/32 is directly connected, Ethernet2
+ O        172.16.1.3/32 is directly connected, Ethernet3
+ O        172.20.8.0/24 [110/20] via 172.16.1.1, Ethernet1
+ O        172.20.10.0/24 [110/20] via 172.16.1.3, Ethernet3
+ O        172.20.11.0/24 [110/20] via 172.16.1.3, Ethernet3
+```
+Маршрут с меньшим весом исчез из таблицы
+Проверим прохождение трафика:
+```
+eve@srv-1:~$ ping 172.20.11.1
+PING 172.20.11.1 (172.20.11.1) 56(84) bytes of data.
+64 bytes from 172.20.11.1: icmp_seq=1 ttl=61 time=139 ms
+64 bytes from 172.20.11.1: icmp_seq=2 ttl=61 time=16.0 ms
+64 bytes from 172.20.11.1: icmp_seq=3 ttl=61 time=16.5 ms
+^C
+--- 172.20.11.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 16.036/57.183/139.017/57.865 ms
+eve@srv-1:~$ ping 172.20.10.1
+PING 172.20.10.1 (172.20.10.1) 56(84) bytes of data.
+64 bytes from 172.20.10.1: icmp_seq=1 ttl=61 time=17.3 ms
+64 bytes from 172.20.10.1: icmp_seq=2 ttl=61 time=14.8 ms
+64 bytes from 172.20.10.1: icmp_seq=3 ttl=61 time=14.8 ms
+64 bytes from 172.20.10.1: icmp_seq=4 ttl=61 time=14.6 ms
+^C
+--- 172.20.10.1 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+rtt min/avg/max/mdev = 14.552/15.339/17.253/1.108 ms
+eve@srv-1:~$ ping 172.20.10.2
+PING 172.20.10.2 (172.20.10.2) 56(84) bytes of data.
+^C
+--- 172.20.10.2 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2050ms
+```
+Картина поменялась
 
 Можем прогнозировать, что srv-4 может связаться с srv-3, но не сможет с Srv-2
 ```
@@ -155,6 +215,7 @@ From 172.20.11.254 icmp_seq=2 Destination Host Unreachable
 pipe 2
 ```
 Как видим наши предположения подтвердились.
+
 
 5. На интерфейсах p2p удалим ipv4 адреса, но согласно пункта 15.2.3.5 User-Manual, для работы протокола OSPF нужен ipv4 адрес, но его можно заимствовать, например с интерфейса loopback 1. Таким образом на Spine, для работы OSPF необходим адрес только на одном интерфейсе.
 В итоге насройка на Spine-2 выглядит следующим образом:
