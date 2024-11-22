@@ -154,6 +154,8 @@ From 172.20.11.254 icmp_seq=2 Destination Host Unreachable
 2 packets transmitted, 0 received, +2 errors, 100% packet loss, time 1006ms
 pipe 2
 ```
+Как видим наши предположения подтвердились.
+
 5. На интерфейсах p2p удалим ipv4 адреса, но согласно пункта 15.2.3.5 User-Manual, для работы протокола OSPF нужен ipv4 адрес, но его можно заимствовать, например с интерфейса loopback 1. Таким образом на Spine, для работы OSPF необходим адрес только на одном интерфейсе.
 В итоге насройка на Spine-2 выглядит следующим образом:
 ```
@@ -202,7 +204,7 @@ rtt min/avg/max/mdev = 15.312/30.127/44.942/14.815 ms
 spine-1(config)#default interface eth 1-3
 spine-1(config)#no router ospf 200
 ```
-На Liaf на SVI нужно, также, удалить принадлежностиь к aria 0
+Удаляем принадлежность к backbone с интерфейсов loopback, а на Liaf ещё и на SVI.
 
 А. Создадим и настроим процесс OSPFv3
 ```
@@ -257,4 +259,66 @@ Neighbor 172.16.1.1 VRF default priority is 0, state is Full
   Graceful-restart-helper mode is Inactive
   Graceful-restart attempts: 0
 ```
+Статус full - обозначает что соседство установлено.
+Пропишем ipv6 адреса на интерфейсах loopback 1 коммутаторов leaf, и проверим таблицу маршрутизации.
+```
+leaf-3#sho ipv6 route
 
+VRF: default
+Displaying 3 of 6 IPv6 routing table entries
+Codes: C - connected, S - static, K - kernel, O3 - OSPFv3,
+       B - Other BGP Routes, A B - BGP Aggregate, R - RIP,
+       I L1 - IS-IS level 1, I L2 - IS-IS level 2, DH - DHCP,
+       NG - Nexthop Group Static Route, M - Martian,
+       DP - Dynamic Policy Route, L - VRF Leaked,
+       RC - Route Cache Route
+
+ O3       2006::1/128 [110/30]
+           via fe80::5201:ff:fee5:e36a, Ethernet1
+           via fe80::5201:ff:fe4b:6277, Ethernet2
+ O3       2006::2/128 [110/30]
+           via fe80::5201:ff:fee5:e36a, Ethernet1
+           via fe80::5201:ff:fe4b:6277, Ethernet2
+ C        2006::3/128 [0/0]
+           via Loopback1, directly connected
+```
+Как видим маршруты ходят. 
+Проверим прохождение трафика:
+```
+leaf-2#ping ipv6 2006::1
+PING 2006::1(2006::1) 52 data bytes
+60 bytes from 2006::1: icmp_seq=1 ttl=63 time=29.2 ms
+60 bytes from 2006::1: icmp_seq=2 ttl=63 time=59.4 ms
+60 bytes from 2006::1: icmp_seq=3 ttl=63 time=57.5 ms
+60 bytes from 2006::1: icmp_seq=4 ttl=63 time=18.8 ms
+60 bytes from 2006::1: icmp_seq=5 ttl=63 time=6.38 ms
+
+--- 2006::1 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 98ms
+rtt min/avg/max/mdev = 6.382/34.286/59.433/21.062 ms, pipe 3, ipg/ewma 24.564/30.464 ms
+leaf-2#ping ipv6 2006::2
+PING 2006::2(2006::2) 52 data bytes
+60 bytes from 2006::2: icmp_seq=1 ttl=64 time=0.822 ms
+60 bytes from 2006::2: icmp_seq=2 ttl=64 time=0.485 ms
+60 bytes from 2006::2: icmp_seq=3 ttl=64 time=0.290 ms
+60 bytes from 2006::2: icmp_seq=4 ttl=64 time=0.292 ms
+60 bytes from 2006::2: icmp_seq=5 ttl=64 time=0.087 ms
+
+--- 2006::2 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 6ms
+rtt min/avg/max/mdev = 0.087/0.395/0.822/0.248 ms, ipg/ewma 1.616/0.593 ms
+leaf-2#ping ipv6 2006::3
+PING 2006::3(2006::3) 52 data bytes
+60 bytes from 2006::3: icmp_seq=1 ttl=63 time=12.4 ms
+60 bytes from 2006::3: icmp_seq=2 ttl=63 time=17.7 ms
+60 bytes from 2006::3: icmp_seq=3 ttl=63 time=13.6 ms
+60 bytes from 2006::3: icmp_seq=4 ttl=63 time=8.69 ms
+60 bytes from 2006::3: icmp_seq=5 ttl=63 time=11.3 ms
+
+--- 2006::3 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 52ms
+rtt min/avg/max/mdev = 8.694/12.792/17.780/2.988 ms, pipe 2, ipg/ewma 13.109/12.443 ms
+```
+Полный успех.
+
+К сожалению, мне не удалось пробросить маршруты ipv4 через OSPFv3, но если мы будем использовать VPN тоннели, то это, возможно, не потребуется.
