@@ -195,4 +195,66 @@ PING 172.20.11.1 (172.20.11.1) 56(84) bytes of data.
 --- 172.20.11.1 ping statistics ---
 2 packets transmitted, 2 received, 0% packet loss, time 1002ms
 rtt min/avg/max/mdev = 15.312/30.127/44.942/14.815 ms
+```
+## OSPFv3 через LLA (Link Local Addresses)
+Удалим настройки OSPFv2 удалив процесс и сбросив настройки на интерфейсах
+```
+spine-1(config)#default interface eth 1-3
+spine-1(config)#no router ospf 200
+```
+На Liaf на SVI нужно, также, удалить принадлежностиь к aria 0
+
+А. Создадим и настроим процесс OSPFv3
+```
+leaf-3(config)#ipv6 router ospf 100
+leaf-3(config-router-ospf3)#router-id 172.16.1.3
+leaf-3(config-router-ospf3)#log-adjacency-changes
+leaf-3(config-router-ospf3)#passive-interface default
+leaf-3(config-router-ospf3)#no passive-interface ethernet 1-2
+```
+B. На p2p интерфейсах включим ipv6 и обозначим принадлежность к area
+
+```
+leaf-2(config-if-Et1-2)#no switchport
+leaf-2(config-if-Et1-2)#ipv6 enable
+leaf-2(config-if-Et1-2)#ipv6 ospf 100 area 0
+leaf-2(config-if-Et1-2)#ipv6 ospf network point-to-point
+leaf-2(config-if-Et1-2)#sho ac
+interface Ethernet1
+   no switchport
+   ipv6 enable
+   ipv6 ospf network point-to-point
+   ipv6 ospf 100 area 0.0.0.0
+interface Ethernet2
+   no switchport
+   ipv6 enable
+   ipv6 ospf network point-to-point
+   ipv6 ospf 100 area 0.0.0.0
+```
+С. Проверим отношение соседства
+```
+spine-2#sho ipv6 ospf neighbor
+Routing Process "ospf 100":
+Neighbor 172.16.1.3 VRF default priority is 0, state is Full
+  In area 0.0.0.0 interface Ethernet3
+  DR is None BDR is None
+  Options is E R V6
+  Dead timer is due in 36 seconds
+  Graceful-restart-helper mode is Inactive
+  Graceful-restart attempts: 0
+Neighbor 172.16.1.2 VRF default priority is 0, state is Full
+  In area 0.0.0.0 interface Ethernet2
+  DR is None BDR is None
+  Options is E R V6
+  Dead timer is due in 29 seconds
+  Graceful-restart-helper mode is Inactive
+  Graceful-restart attempts: 0
+Neighbor 172.16.1.1 VRF default priority is 0, state is Full
+  In area 0.0.0.0 interface Ethernet1
+  DR is None BDR is None
+  Options is E R V6
+  Dead timer is due in 36 seconds
+  Graceful-restart-helper mode is Inactive
+  Graceful-restart attempts: 0
+```
 
