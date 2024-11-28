@@ -1,0 +1,9 @@
+ leaf1_isis_unnumb.
+ leaf2_isis_ipv4.
+ leaf2_isis_unnumb.
+ leaf3_isis_ipv4.
+ leaf3_isis_unnumb.
+ spine1_isis_ipv4.
+ spine1_isis_unnumb.
+ spine2_isis_ipv4.
+ spine2_isis_unnumb.
