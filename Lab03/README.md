@@ -1,6 +1,8 @@
 #  Лабораторная по ISIS Underlay
 Цель: настроить маршрутизацию ISIS используя unicast ipv4 адреса и адреса ipv6 LLA (Link local address)
 
+#### Важное замечание!!! Настройки будем производить одновременно на на двух группах устройств первая, куда вхдодят все Leaf, и вторая, куда входят все Spine
+
 За основу конфигурации возьмём лабораторную №1 где уже настроены p2p линки.
 ## ISIS IPv4
 ### 1. Поднимем процесс ISIS и зададим параметры: тип адреса, зоны, id-устройства
@@ -252,4 +254,58 @@ rtt min/avg/max/mdev = 15.048/23.973/37.674/9.834 ms
 
 ```
 ## IPv6 
-Ситуация у Arista полностью аналогична OSPF
+Ситуация у Arista полностью аналогична протоколу OSPF. Ничего интересного.
+## Authentication
+Доступ к протоколу можно ограничить паролем, согласно инструкции его можно установить шлобально, а можно, непосредственно, на интерфейсе.
+
+Установим пароль глобально на leaf-1
+```
+leaf-1(config-router-isis)#sho ac
+router isis Otus
+   net 49.2222.0000.0000.0001.00
+   authentication mode md5
+   authentication key 7 v7g20eURx0inAMyxm5CWHQ==
+   !
+   address-family ipv4 unicast
+```
+Проверим установление соседства на Spine-2 
+```
+spine-2#sho isis neighbors
+
+Instance  VRF      System Id        Type Interface          SNPA              State Hold time   Circuit Id
+Otus      default  leaf-1           L1L2 Ethernet1          P2P               UP    22          0B
+Otus      default  leaf-2           L1L2 Ethernet2          P2P               UP    26          0B
+Otus      default  leaf-3           L1L2 Ethernet3          P2P               UP    23          0C
+```
+Соседство установилось, что странно.
+Пропишем то же на интерфейсе и проверим соседство:
+```
+spine-1#sho isis neighbors
+
+Instance  VRF      System Id        Type Interface          SNPA              State Hold time   Circuit Id
+Otus      default  leaf-1           L1L2 Ethernet1          P2P               INIT  25          00
+Otus      default  leaf-2           L1L2 Ethernet2          P2P               INIT  27          00
+Otus      default  leaf-3           L1L2 Ethernet3          P2P               INIT  27          00
+```
+Установим авторизацию на интерфейсах Spine:
+
+
+
+Удалим пароль из глобальной конфигурации isis и проверим соседство:
+```
+spine-1(config-if-Et1-3)#do sho isis nei
+
+Instance  VRF      System Id        Type Interface          SNPA              State Hold time   Circuit Id
+Otus      default  leaf-1           L1L2 Ethernet1          P2P               INIT  25          00
+Otus      default  leaf-2           L1L2 Ethernet2          P2P               INIT  25          00
+Otus      default  leaf-3           L1L2 Ethernet3          P2P               INIT  27          00
+spine-1(config-if-Et1-3)#isis authentication key Secret
+spine-1(config-if-Et1-3)#isis authentication mode md5
+spine-1(config-if-Et1-3)#do sho isis nei
+
+Instance  VRF      System Id        Type Interface          SNPA              State Hold time   Circuit Id
+Otus      default  leaf-1           L1L2 Ethernet1          P2P               UP    28          0A
+Otus      default  leaf-2           L1L2 Ethernet2          P2P               UP    25          0A
+Otus      default  leaf-3           L1L2 Ethernet3          P2P               UP    30          0B
+```
+Соседство установилось. Вывод глобальная конфигурация не работает, пароль нужно ставить на интерфейсах
