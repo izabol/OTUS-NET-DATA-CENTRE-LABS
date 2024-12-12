@@ -260,6 +260,24 @@ spine-2(swp2)   4      65000       186       183        0    0    0 00:08:46    
 
 Total number of neighbors 2
 ```
+Посмотрим маршруты:
+```
+cumulus@leaf-1:mgmt:~$ net sho route bgp
+RIB entry for bgp
+=================
+Codes: K - kernel route, C - connected, S - static, R - RIP,
+       O - OSPF, I - IS-IS, B - BGP, E - EIGRP, N - NHRP,
+       T - Table, A - Babel, D - SHARP, F - PBR, f - OpenFabric,
+       Z - FRR,
+       > - selected route, * - FIB route, q - queued, r - rejected, b - backup
+       t - trapped, o - offload failure
+
+B>* 172.20.10.0/24 [200/0] via fe80::5201:ff:fe01:1, swp1, weight 1, 01:05:11
+  *                        via fe80::5201:ff:fe02:1, swp2, weight 1, 01:05:11
+B>* 172.20.11.0/24 [200/0] via fe80::5201:ff:fe01:1, swp1, weight 1, 01:05:11
+  *                        via fe80::5201:ff:fe02:1, swp2, weight 1, 01:05:11
+```
+
 Проверим прохождение трафика между серверами Srv-1 и Srv-4
 ```
 eve@srv1:~$ ping 172.20.11.1 -c 3
