@@ -277,7 +277,32 @@ B>* 172.20.10.0/24 [200/0] via fe80::5201:ff:fe01:1, swp1, weight 1, 01:05:11
 B>* 172.20.11.0/24 [200/0] via fe80::5201:ff:fe01:1, swp1, weight 1, 01:05:11
   *                        via fe80::5201:ff:fe02:1, swp2, weight 1, 01:05:11
 ```
+На spine:
+```
+cumulus@spine-1:mgmt:~$ net sho bgp
+show bgp ipv4 unicast
+=====================
+BGP table version is 10, local router ID is 172.16.0.1, vrf id 0
+Default local pref 100, local AS 65000
+Status codes:  s suppressed, d damped, h history, * valid, > best, = multipath,
+               i internal, r RIB-failure, S Stale, R Removed
+Nexthop codes: @NNN nexthop's vrf id, < announce-nh-self
+Origin codes:  i - IGP, e - EGP, ? - incomplete
+RPKI validation codes: V valid, I invalid, N Not found
 
+   Network          Next Hop            Metric LocPrf Weight Path
+*>i172.20.8.0/24    swp1                     0    100      0 ?
+*>i172.20.10.0/24   swp2                     0    100      0 ?
+*=i                 swp3                     0    100      0 ?
+*>i172.20.11.0/24   swp3                     0    100      0 ?
+
+Displayed  3 routes and 4 total paths
+
+
+show bgp ipv6 unicast
+=====================
+No BGP prefixes displayed, 0 exist
+```
 Проверим прохождение трафика между серверами Srv-1 и Srv-4
 ```
 eve@srv1:~$ ping 172.20.11.1 -c 3
