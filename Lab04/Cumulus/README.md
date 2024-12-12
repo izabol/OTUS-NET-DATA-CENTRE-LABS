@@ -273,4 +273,4 @@ rtt min/avg/max/mdev = 1.647/1.682/1.739/0.040 ms
 ```
 Полный успех!
 
-В архиве лаба из EVE-NG образ приложен
+В архиве лаба из EVE-NG образ можно скачать по ссылке: https://cloud.mail.ru/public/3grP/RGfmtbnrf
