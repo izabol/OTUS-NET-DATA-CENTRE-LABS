@@ -2,14 +2,21 @@
 Цель: исследовать работу L2VNI на коммутаторах под управлением OS Cumulus и EOS Arista используя маршрутизацию iBGP
 
 Лабы в рамках одного типа коммутаторов выполнены в отдельных папках. В рамках данной работы соберём следующую схему. Один из спйнов будет Arista, другой Cumulus, также на схеме есть две пары коммутаторов leaf разных вендоров.
+
 ![Arista+Cumulus_lab.png](Arista+Cumulus_lab.png)
-exit
+
 ## Первоначальная настройка
+
 ### Cumulus
-Начнём конфигурацию с коммутаторов Cumuluds 
+
+Начнём конфигурацию с коммутаторов Cumulus 
+
 1. Настройка Spine
+
 Настройка интерфейсов Spine минималистична и заключается в простом прописывании интерфейсов
+
 <details>
+
 <summary>файл /etc/network/interfaces</summary>
 
 ```
@@ -45,7 +52,9 @@ iface swp4
 </details>
 
 Применяем настройки командой: sudo ifreload -a
+
 <details>
+
 <summary>Проверяем </summary>
 
 ```
@@ -87,10 +96,14 @@ cumulus@spine-2:mgmt:~$ ip a
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 ```
+
 </details>
+
 Интерфейсы присутствуют.
 Остальная настройка будет проходить в утилите vtysh, где мы настроим ipv6 Neighbor Discovery(ND) на интерфейсах, пропишем ASN и в нём включим поддержку l2vni evpn.
+
 <details>
+
 <summary>В итоге, получим следующую конфигурацию</summary>
 
 ```
@@ -141,11 +154,15 @@ exit
 !
 end
 ```
+
 </details>
 
 2. Настройка leaf
+
 Кроме простого прописывания интерфейсов, необходимо создать Vlan и vni. Также не забыть добавить в бридж интерфейсы участвующие в свичинге плюс интерфейсы vni.
+
 <details>
+
 <summary>В итоге, получим следующую конфигурацию на первом leaf</summary>
 
 ```
@@ -222,9 +239,13 @@ iface vni10011
     mstpctl-bpduguard yes
     mstpctl-portbpdufilter yes
 ```
+
 </details>
+
 На интерфейсах Vlan прописаны временные ip адреса, для проверки связности с серверами, в конце мы их выключим.
+
 <details>
+
 <summary>После применения, проверяем что получилось</summary>
 
 ```
@@ -286,10 +307,14 @@ cumulus@leaf-21:mgmt:~$ ip a
 15: vni10010: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9216 qdisc noqueue master bridge state UNKNOWN group default qlen 1000
     link/ether ea:d4:47:38:70:c0 brd ff:ff:ff:ff:ff:ff
 ```
+
 </details>
-Интервейсы созданы, и сконфигурированы, добавлены в брижд (master bridge) созданы Vlan.
+
+Интервейсы созданы, и сконфигурированы, добавлены в брижд (об этом говорит наличие "master bridge") созданы Vlan.
 При настройке маршрутизации, в первую очередь нужно обеспечить анонсы интерфейсов loobbak0 (lo), для этого создадим соответствующий Route-map который применим в секции "address-family ipv4 unicast", а также в настройках EVPN добавим "волшебную" опцию "advertise-all-vni"
+
 <details>
+
 <summary>В итоге, получим следующую конфигурацию на первом leaf</summary>
 
 ```
@@ -338,8 +363,11 @@ exit
 !
 end
 ```
+
 </details>
+
 <details>
+
 <summary>Проверяем установление соседства</summary>
 
 ```
@@ -358,12 +386,17 @@ spine-2(swp2)   4      65000      6231      6237        0    0    0 00:00:11    
 
 Total number of neighbors 2
 ```
+
 </details>
+
 Соседство установлено только с одним Spine, что логично.
 
 3. Настройка серверов
+
 Настройка заключается в прописывании адресов на интерфесах серверов. Первоначально все интерфейсы находятся в одном Vlan 10
+
 <details>
+
 <summary>Поэтому получим результат</summary>
 
 ```
@@ -392,14 +425,19 @@ PING 172.20.10.4 (172.20.10.4) 56(84) bytes of data.
 3 packets transmitted, 2 received, 33.3333% packet loss, time 2004ms
 rtt min/avg/max/mdev = 1.295/1.481/1.667/0.186 ms
 ```
+
 </details>
 
 Первоначальная настройка Cumulus закончина. Приступаем к настройке Arista
 
 ### Arista
+
 1. Настройка Spine
+
 Настройка Spine аналогична лабе по eBGP.
+
 <details>
+
 <summary>В итоге, получим следующую конфигурацию</summary>
 
 ```
@@ -456,8 +494,11 @@ router bgp 65000
 !
 end
 ```
+
 </details>
+
 <details>
+
 <summary>Проверяем на leaf(Cumulus) установление соседства</summary>
 
 ```
@@ -475,16 +516,25 @@ swp1            4      65000      5621      4848        0    0    0 00:00:45    
 spine-2(swp2)   4      65000      6633      6639        0    0    0 00:20:16            1        2 N/A
 
 ```
+
 </details>
+
 Соседство установлено
 
 2. Настройка Leaf
+
 a. Поднимим ipv6 на интерфейсах что идут в Spine, удалим их из свичинга.
+
 b. Создадим vlan и на их интерфейсах пропишем временные ip адреса.
+
 c. Создадим интерфейс vxlan, пропишем в нём интерфейс с котрого будут ходить VPN, и свяжем, пока vlan10 и VNI метку.
+
 d. Пропишем маршрутизацию, как в лабе по eBGP.
+
 e. Создадим vlan 10 в который необходимо прописать Route Distinguisher (RD) и Route Target (RT), которые подсмотрим у Cumulus.
+
 <details>
+
 <summary>Так маршруты выглядят на leaf(Cumulus)</summary>
 
 ```
@@ -556,9 +606,13 @@ Route Distinguisher: 172.16.1.4:3
 
 Displayed 10 out of 15 total prefixes
 ```
+
 </details>
+
 Как видим, для vlan10 RD это адрес интерфейса источника и номер по порядку, в данном случае - "2", а RD это ASN и индекс VNI. Значит, нам нужно произвести соответствующие преобразования.
+
 <details>
+
 <summary>В итоге, получим следующую конфигурацию</summary>
 
 ```
@@ -649,10 +703,12 @@ router bgp 65001
 !
 end
 ```
+
 </details>
 
 
 <details>
+
 <summary>Проверим установление соседства</summary>
 
 ```
@@ -667,9 +723,13 @@ fe80::5201:ff:fee5:e36a%Et1       65000 Established   IPv4 Unicast            Ne
 fe80::5201:ff:fee5:e36a%Et1       65000 Established   L2VPN EVPN              Negotiated             12         12
 
 ```
+
 </details>
-Сосеедство установлено
+
+Соседство установлено
+
 <details>
+
 <summary>Посмотрим таблицу маршрутизаци evpn</summary>
 
 ```
@@ -735,10 +795,15 @@ AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Li
  *  ec    RD: 172.16.1.4:3 imet 172.16.1.4
                                  172.16.1.4            -       100     0       65000 65004 i
 ```
+
 </details>
+
 3. Настройка серверов
+
 Пропишем аддреса на интерфейсы, и попробуем посмотреть прохождение трафика
+
 <details>
+
 <summary>Получим</summary>
 
 ```
@@ -770,15 +835,20 @@ PING 172.20.10.4 (172.20.10.4) 56(84) bytes of data.
 3 packets transmitted, 3 received, 0% packet loss, time 2004ms
 rtt min/avg/max/mdev = 9.643/17.597/25.666/6.541 ms
 ```
+
 </details>
+
 Трафик ходит.
 
 # Окончательная настройка
+
 На Leaf(Arista) разнесём сервера по Vlan, допишем в интерфейсе vxlan 1 недостающий vlan и мапинг с do sho run
 На Leaf(Cumulus), также, разнесём сервера по Vlan.
 На всех leaf удалим адреса на интерфейсах Vlan.
 У нас получилось, что в разных vlan одинаковые сети, проверим работу от первого сервера. Он в одной Vlan с третьим сервером. Ничего доругого пинговаться с него не должно
+
  <details>
+
 <summary>Получим</summary>
 
 ```
@@ -834,7 +904,9 @@ From 172.20.10.1 icmp_seq=3 Destination Host Unreachable
 3 packets transmitted, 0 received, +3 errors, 100% packet loss, time 2044ms
 pipe 3
 ```
+
 </details>
+
 Нужный трафик ходит, а не нужный - нет.
 
 Вывод: настройка Cumulus больше подходит для автоматизации, так как для Arista нужно перечислять всех соседей, что неудобно. Плюс, если на горячую подключать новые коммутаторы, придётся изменять настроки BGP.
