@@ -164,6 +164,7 @@ eve@srv-2:~$ ip neighbor show
 это МАС машины с адресом 172.20.10.1. 
 
 # iBGP 
+За основу возьмём лабу по iBGP unnumdered underlay.
 Настроим iBGP на спайн, указав, что соседи будут с той же ASN, что он Route Reflector(RR), указав в сторону соседей, что там клиенты RR, а также, что он будет аннонсить маршруты от собственного интерфейса. Итого для spine-1 получим:
 ```
 router bgp 65000
@@ -174,19 +175,21 @@ router bgp 65000
    neighbor underlay send-community extended
    neighbor interface Et1-3 peer-group underlay remote-as 65000
    !
-   address-family evpn
-      neighbor underlay activate
-   !
    address-family ipv4
       neighbor underlay activate
       neighbor underlay next-hop address-family ipv6 originate
 ```
-на leaf изменим свою ASN и соседа. Для leaf-2 получим:
+На leaf заведём отдельные peer-group для работы с L2EVPN, которые будут работать поверх underlay, передавая маршруты L2EVPN, для чего активируем её в секции address-family evpn. В качестве источника укажем интерфейс loopback 1. Также пропишем RT и RD, в секции каждого vlan, что участвует в EVPN. Для leaf-2 получим:
 ```
 router bgp 65000
    router-id 172.16.1.2
+   neighbor spine_evpn peer group
+   neighbor spine_evpn remote-as 65000
+   neighbor spine_evpn update-source Loopback1
+   neighbor spine_evpn send-community extended
    neighbor underlay peer group
-   neighbor underlay send-community extended
+   neighbor 172.16.1.1 peer group spine_evpn
+   neighbor 172.16.1.3 peer group spine_evpn
    redistribute connected route-map ADVERT_INT
    neighbor interface Et1-2 peer-group underlay remote-as 65000
    !
@@ -196,27 +199,30 @@ router bgp 65000
       redistribute learned
    !
    address-family evpn
-      neighbor underlay activate
-      neighbor underlay encapsulation vxlan
+      neighbor spine_evpn activate
    !
    address-family ipv4
+      neighbor spine_evpn activate
       neighbor underlay activate
       neighbor underlay next-hop address-family ipv6 originate
-!
 ```
-проверим установление соседства:
+Так же для теста, на leaf-1 vlan8 замапим в тот же VNI, что и остальные. 
+Проверим установление соседства:
 ```
 leaf-2#sho bgp summary
 BGP summary information for VRF default
 Router identifier 172.16.1.2, local AS number 65000
 Neighbor                             AS Session State AFI/SAFI                AFI/SAFI State   NLRI Rcd   NLRI Acc
 --------------------------- ----------- ------------- ----------------------- -------------- ---------- ----------
-fe80::5201:ff:fe4b:6277%Et2       65000 Established   IPv4 Unicast            Negotiated              1          1
-fe80::5201:ff:fe4b:6277%Et2       65000 Established   L2VPN EVPN              Negotiated              0          0
-fe80::5201:ff:fee5:e36a%Et1       65000 Established   IPv4 Unicast            Negotiated              1          1
-fe80::5201:ff:fee5:e36a%Et1       65000 Established   L2VPN EVPN              Negotiated              0          0
+172.16.1.1                        65000 Established   IPv4 Unicast            Negotiated              1          1
+172.16.1.1                        65000 Established   L2VPN EVPN              Negotiated              2          2
+172.16.1.3                        65000 Established   IPv4 Unicast            Negotiated              1          1
+172.16.1.3                        65000 Established   L2VPN EVPN              Negotiated              2          2
+fe80::5201:ff:fe4b:6277%Et2       65000 Established   IPv4 Unicast            Negotiated              2          2
+fe80::5201:ff:fee5:e36a%Et1       65000 Established   IPv4 Unicast            Negotiated              2          2
+
 ```
-Маршруты:
+Маршруты BGP:
 ```
 leaf-2#sho ip bgp
 BGP routing table information for VRF default
@@ -229,9 +235,37 @@ RPKI Origin Validation codes: V - valid, I - invalid, U - unknown
 AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
 
           Network                Next Hop              Metric  AIGP       LocPref Weight  Path
+ * >      172.16.1.1/32          fe80::5201:ff:fe4b:6277%Et2 0       -          100     0       i Or-ID: 172.16.1.1 C-LST: 172.16.0.2
+ *        172.16.1.1/32          fe80::5201:ff:fee5:e36a%Et1 0       -          100     0       i Or-ID: 172.16.1.1 C-LST: 172.16.0.1
+ *        172.16.1.1/32          172.16.1.1            0       -          100     0       i
  * >      172.16.1.2/32          -                     -       -          -       0       i
  * >      172.16.1.3/32          fe80::5201:ff:fe4b:6277%Et2 0       -          100     0       i Or-ID: 172.16.1.3 C-LST: 172.16.0.2
  *        172.16.1.3/32          fe80::5201:ff:fee5:e36a%Et1 0       -          100     0       i Or-ID: 172.16.1.3 C-LST: 172.16.0.1
+ *        172.16.1.3/32          172.16.1.3            0       -          100     0       i
+```
+Маршруты evpn:
+```
+leaf-2#sho bgp evpn
+BGP routing table information for VRF default
+Router identifier 172.16.1.2, local AS number 65000
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending BGP convergence
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 172.16.1.1:10 mac-ip 0050.0100.0701
+                                 172.16.1.1            -       100     0       i
+ * >      RD: 172.16.1.2:10 mac-ip 0050.0100.0801
+                                 -                     -       -       0       i
+ * >      RD: 172.16.1.3:10 mac-ip 0050.0100.0901
+                                 172.16.1.3            -       100     0       i
+ * >      RD: 172.16.1.1:10 imet 172.16.1.1
+                                 172.16.1.1            -       100     0       i
+ * >      RD: 172.16.1.2:10 imet 172.16.1.2
+                                 -                     -       -       0       i
+ * >      RD: 172.16.1.3:10 imet 172.16.1.3
+                                 172.16.1.3            -       100     0       i
 ```
 Доступность loopback:
 ```
@@ -245,20 +279,48 @@ PING 172.16.1.3 (172.16.1.3) 72(100) bytes of data.
 5 packets transmitted, 3 received, 40% packet loss, time 35ms
 rtt min/avg/max/mdev = 6.459/7.283/8.623/0.955 ms, ipg/ewma 8.937/8.154 ms
 ```
-проверим, что получаем по evpn:
+Проверим прохождение трафика между серверами:
 ```
-leaf-2#sho bgp evpn
-BGP routing table information for VRF default
-Router identifier 172.16.1.2, local AS number 65000
-Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
-                    c - Contributing to ECMP, % - Pending BGP convergence
-Origin codes: i - IGP, e - EGP, ? - incomplete
-AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+eve@srv-2:~$ ping 172.20.10.1 -c 3
+PING 172.20.10.1 (172.20.10.1) 56(84) bytes of data.
+64 bytes from 172.20.10.1: icmp_seq=1 ttl=64 time=61.2 ms
+64 bytes from 172.20.10.1: icmp_seq=2 ttl=64 time=17.5 ms
+64 bytes from 172.20.10.1: icmp_seq=3 ttl=64 time=16.0 ms
 
-          Network                Next Hop              Metric  LocPref Weight  Path
- * >      RD: 172.16.1.2:10 imet 172.16.1.2
-                                 -                     -       -       0       i
+--- 172.20.10.1 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 16.038/31.598/61.233/20.963 ms
+eve@srv-2:~$ ping 172.20.10.10 -c 3
+PING 172.20.10.10 (172.20.10.10) 56(84) bytes of data.
+64 bytes from 172.20.10.10: icmp_seq=1 ttl=64 time=21.2 ms
+64 bytes from 172.20.10.10: icmp_seq=2 ttl=64 time=23.3 ms
+64 bytes from 172.20.10.10: icmp_seq=3 ttl=64 time=19.0 ms
+
+--- 172.20.10.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 19.030/21.163/23.303/1.744 ms
+eve@srv-2:~$ ip a
+. . .
+3: ens4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 00:50:01:00:08:01 brd ff:ff:ff:ff:ff:ff
+    altname enp0s4
+    inet 172.20.10.2/24 brd 172.20.10.255 scope global ens4
+       valid_lft forever preferred_lft forever
+    inet6 fe80::250:1ff:fe00:801/64 scope link
+       valid_lft forever preferred_lft forever
 ```
-Вот и главное разочарование, мы получаем - НИЧЕГО. Увы
-Попытки включить энкапсуляцию vxlan, ни к чему не привели...
-Снова неудача с iBGP.
+Адрес 172.20.10.10 прописан дополнительно на первом сервере
+```
+eve@srv-1:~$ ip a sho ens4
+3: ens4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 00:50:01:00:07:01 brd ff:ff:ff:ff:ff:ff
+    altname enp0s4
+    inet 172.20.8.1/24 brd 172.20.8.255 scope global ens4
+       valid_lft forever preferred_lft forever
+    inet 172.20.10.10/24 scope global ens4
+       valid_lft forever preferred_lft forever
+    inet6 fe80::250:1ff:fe00:701/64 scope link
+       valid_lft forever preferred_lft forever
+```
+Вывод: iBGP не оказывает нагрузку на spine, вся работа по распространению трафика ложится на leaf
+ 
