@@ -671,7 +671,9 @@ Route Distinguisher: 172.16.1.3:11
 
 Displayed 4 prefixes (4 paths) (of requested type)
 ```
-Не прилетает ничего. Но работает
+
+О маршруте до второго сервера, не прилетает ничего. Но работает
+
 ```
 eve@srv3:~$ ping 172.20.11.2 -c 3 -t 1
 PING 172.20.11.2 (172.20.11.2) 56(84) bytes of data.
@@ -695,7 +697,9 @@ eve@srv3:~$ ip neighbo
 10.100.143.21 dev ens3  INCOMPLETE
 172.20.11.253 dev bond0 lladdr 50:01:00:05:00:03 STALE
 ```
+
 ни на Arista
+
 ```
 leaf-11#sho bgp evpn vni 10011
 BGP routing table information for VRF default
@@ -753,7 +757,9 @@ AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Li
  *  ec    RD: 172.16.1.4:11 imet 172.17.1.2
                                  172.17.1.2            -       100     0       65000 65004 i
 ```
+
 ни на Cumulus
+
 ```
 leaf-21# sho bgp l2vpn evpn route rd 172.16.1.1:11
 EVPN type-1 prefix: [1]:[EthTag]:[ESI]:[IPlen]:[VTEP-IP]:[Frag-id]
@@ -810,7 +816,9 @@ Paths: (2 available, best #2)
 
 Displayed 1 prefixes (2 paths) with this RD
 ```
+
 Добавляем "redistribute learned" в настройку  vlan11
+
 ```
    vlan 11
       rd 172.16.1.1:11
@@ -818,7 +826,9 @@ Displayed 1 prefixes (2 paths) with this RD
       route-target export 10011:10011
       redistribute learned
  ```
- И вуаля!!
+
+ И вуаля!! Получаем маршруты до второго сервера.
+
  ```
  leaf-21# sho bgp l2vpn evpn route rd 172.16.1.2:11 type 2
 EVPN type-1 prefix: [1]:[EthTag]:[ESI]:[IPlen]:[VTEP-IP]:[Frag-id]
