@@ -1,0 +1,50 @@
+frr version 8.4.3
+frr defaults datacenter
+hostname leaf-3
+log syslog informational
+service integrated-vtysh-config
+!
+interface lo
+ ip ospf area 0
+exit
+!
+interface swp1
+ ip ospf area 0
+ ip ospf mtu-ignore
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+interface swp2
+ ip ospf area 0
+ ip ospf mtu-ignore
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+interface swp3
+ ip ospf area 0
+ ip ospf mtu-ignore
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+interface swp4
+ ip ospf area 0
+ ip ospf mtu-ignore
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+interface swp5
+ ip ospf area 0
+ ip ospf mtu-ignore
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+router ospf
+ ospf router-id 172.16.1.3
+ passive-interface default
+exit
+!

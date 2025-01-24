@@ -1,0 +1,60 @@
+frr version 10.2.1
+frr defaults datacenter
+hostname srv-1
+log syslog informational
+no ip forwarding
+no ipv6 forwarding
+service integrated-vtysh-config
+!
+vrf red_vrf
+exit-vrf
+!
+interface ens3
+ ip ospf passive
+exit
+!
+interface ens4
+ ip ospf area 0
+ ip ospf mtu-ignore
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+interface ens5
+ ip ospf area 0
+ ip ospf mtu-ignore
+ ip ospf network point-to-point
+ no ip ospf passive
+exit
+!
+interface lo
+ ip address 172.16.2.1/32
+ ip ospf area 0
+exit
+!
+router bgp 65000
+ bgp router-id 172.16.2.1
+ neighbor 172.16.2.2 remote-as internal
+ neighbor 172.16.2.3 remote-as internal
+ neighbor 172.16.2.4 remote-as internal
+ neighbor 172.16.2.5 remote-as internal
+ neighbor 172.16.2.6 remote-as internal
+ !
+ address-family l2vpn evpn
+  neighbor 172.16.2.2 activate
+  neighbor 172.16.2.3 activate
+  neighbor 172.16.2.4 activate
+  neighbor 172.16.2.5 activate
+  neighbor 172.16.2.6 activate
+  advertise-all-vni
+  vni 101000
+   advertise-svi-ip
+  exit-vni
+ exit-address-family
+exit
+!
+router ospf
+ ospf router-id 172.16.2.1
+ passive-interface default
+exit
+!
