@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<lab name="OTUS-Project" version="1" scripttimeout="300" lock="0" author="Ivan Zabolotniy">
+  <topology>
+    <nodes>
+      <node id="1" name="leaf-1" type="qemu" template="cumulus" image="cumulus-vx-5.7.0" console="telnet" cpu="1" cpulimit="0" ram="2048" ethernet="8" uuid="bfd5ae5a-7c30-401c-b101-8301cf2e7a87" qemu_options="-machine type=pc,accel=kvm -nographic -rtc base=utc" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="virtio-net-pci" delay="0" icon="Switch L3.png" config="0" left="492" top="816">
+        <interface id="0" name="eth0" type="ethernet" network_id="19"/>
+        <interface id="1" name="swp1" type="ethernet" network_id="2"/>
+        <interface id="2" name="swp2" type="ethernet" network_id="7"/>
+        <interface id="3" name="swp3" type="ethernet" network_id="8"/>
+        <interface id="4" name="swp4" type="ethernet" network_id="1"/>
+        <interface id="5" name="swp5" type="ethernet" network_id="11"/>
+      </node>
+      <node id="2" name="leaf-2" type="qemu" template="cumulus" image="cumulus-vx-5.7.0" console="telnet" cpu="1" cpulimit="0" ram="2048" ethernet="6" uuid="a06b19dd-99ef-45a7-88c4-949aea894574" qemu_options="-machine type=pc,accel=kvm -nographic -rtc base=utc" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="virtio-net-pci" delay="0" icon="Switch L3.png" config="0" left="1008" top="816">
+        <interface id="0" name="eth0" type="ethernet" network_id="20"/>
+        <interface id="1" name="swp1" type="ethernet" network_id="3"/>
+        <interface id="2" name="swp2" type="ethernet" network_id="2"/>
+        <interface id="3" name="swp3" type="ethernet" network_id="13"/>
+        <interface id="4" name="swp4" type="ethernet" network_id="15"/>
+        <interface id="5" name="swp5" type="ethernet" network_id="17"/>
+      </node>
+      <node id="3" name="leaf-3" type="qemu" template="cumulus" image="cumulus-vx-5.7.0" console="telnet" cpu="1" cpulimit="0" ram="2048" ethernet="6" uuid="33cfe3f7-3bcb-4238-88bd-06a30aa3f6f6" qemu_options="-machine type=pc,accel=kvm -nographic -rtc base=utc" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="virtio-net-pci" delay="0" icon="Switch L3.png" config="0" left="1005" top="183">
+        <interface id="0" name="eth0" type="ethernet" network_id="20"/>
+        <interface id="1" name="swp1" type="ethernet" network_id="4"/>
+        <interface id="2" name="swp2" type="ethernet" network_id="3"/>
+        <interface id="3" name="swp3" type="ethernet" network_id="9"/>
+      </node>
+      <node id="4" name="leaf-4" type="qemu" template="cumulus" image="cumulus-vx-5.7.0" console="telnet" cpu="1" cpulimit="0" ram="2048" ethernet="6" uuid="7dafc117-e6ba-428a-bc9a-f112091166ee" qemu_options="-machine type=pc,accel=kvm -nographic -rtc base=utc" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="virtio-net-pci" delay="0" icon="Switch L3.png" config="0" left="714" top="177">
+        <interface id="0" name="eth0" type="ethernet" network_id="20"/>
+        <interface id="1" name="swp1" type="ethernet" network_id="5"/>
+        <interface id="2" name="swp2" type="ethernet" network_id="4"/>
+        <interface id="3" name="swp3" type="ethernet" network_id="10"/>
+        <interface id="4" name="swp4" type="ethernet" network_id="14"/>
+      </node>
+      <node id="5" name="leaf-5" type="qemu" template="cumulus" image="cumulus-vx-5.7.0" console="telnet" cpu="1" cpulimit="0" ram="2048" ethernet="6" uuid="8b872c3b-7998-434a-ba38-cbb317a0d740" qemu_options="-machine type=pc,accel=kvm -nographic -rtc base=utc" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="virtio-net-pci" delay="0" icon="Switch L3.png" config="0" left="204" top="180">
+        <interface id="0" name="eth0" type="ethernet" network_id="19"/>
+        <interface id="1" name="swp1" type="ethernet" network_id="6"/>
+        <interface id="2" name="swp2" type="ethernet" network_id="5"/>
+        <interface id="3" name="swp3" type="ethernet" network_id="12"/>
+        <interface id="4" name="swp4" type="ethernet" network_id="16"/>
+      </node>
+      <node id="7" name="Srv-1" type="qemu" template="linux" image="linux-ubuntu-22.04-server" console="vnc" cpu="2" cpulimit="0" ram="4096" ethernet="3" uuid="7cbbe877-4725-43de-a3a6-6a36df1f77c8" firstmac="00:50:01:00:07:00" qemu_options="-machine type=pc,accel=kvm -vga std -usbdevice tablet -boot order=cd -cpu host" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="e1000" delay="0" icon="Server.png" config="0" left="573" top="519">
+        <interface id="0" name="e0" type="ethernet" network_id="19"/>
+        <interface id="1" name="e1" type="ethernet" network_id="8"/>
+        <interface id="2" name="e2" type="ethernet" network_id="9"/>
+      </node>
+      <node id="8" name="Srv-2" type="qemu" template="linux" image="linux-ubuntu-22.04-server" console="vnc" cpu="2" cpulimit="0" ram="4096" ethernet="3" uuid="a81ce985-f28b-4387-8b0c-1ca5a488fdc0" firstmac="00:50:01:00:08:00" qemu_options="-machine type=pc,accel=kvm -vga std -usbdevice tablet -boot order=cd -cpu host" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="e1000" delay="0" icon="Server.png" config="0" left="471" top="513">
+        <interface id="0" name="e0" type="ethernet" network_id="19"/>
+        <interface id="1" name="e1" type="ethernet" network_id="1"/>
+        <interface id="2" name="e2" type="ethernet" network_id="10"/>
+      </node>
+      <node id="9" name="Srv-3" type="qemu" template="linux" image="linux-ubuntu-22.04-server" console="vnc" cpu="2" cpulimit="0" ram="4096" ethernet="3" uuid="540f1006-24c8-45a3-9fa8-cdb590afe12f" firstmac="00:50:01:00:09:00" qemu_options="-machine type=pc,accel=kvm -vga std -usbdevice tablet -boot order=cd -cpu host" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="e1000" delay="0" icon="Server.png" config="0" left="381" top="522">
+        <interface id="0" name="e0" type="ethernet" network_id="19"/>
+        <interface id="1" name="e1" type="ethernet" network_id="11"/>
+        <interface id="2" name="e2" type="ethernet" network_id="12"/>
+      </node>
+      <node id="10" name="Srv-4" type="qemu" template="linux" image="linux-ubuntu-22.04-server" console="vnc" cpu="2" cpulimit="0" ram="4096" ethernet="3" uuid="2c4602a4-c220-4d62-be3e-f390983ae3e0" firstmac="00:50:01:00:0a:00" qemu_options="-machine type=pc,accel=kvm -vga std -usbdevice tablet -boot order=cd -cpu host" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="e1000" delay="0" icon="Server.png" config="0" left="846" top="480">
+        <interface id="0" name="e0" type="ethernet" network_id="20"/>
+        <interface id="1" name="e1" type="ethernet" network_id="13"/>
+        <interface id="2" name="e2" type="ethernet" network_id="14"/>
+      </node>
+      <node id="11" name="srv-5" type="qemu" template="linux" image="linux-ubuntu-22.04-server" console="vnc" cpu="2" cpulimit="0" ram="4096" ethernet="3" uuid="54274da3-47dc-4b06-b804-b80fcf48c09d" firstmac="00:50:01:00:0b:00" qemu_options="-machine type=pc,accel=kvm -vga std -usbdevice tablet -boot order=cd -cpu host" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="e1000" delay="0" icon="Server.png" config="0" left="759" top="564">
+        <interface id="0" name="e0" type="ethernet" network_id="20"/>
+        <interface id="1" name="e1" type="ethernet" network_id="15"/>
+        <interface id="2" name="e2" type="ethernet" network_id="16"/>
+      </node>
+      <node id="6" name="leaf-6" type="qemu" template="cumulus" image="cumulus-vx-5.7.0" console="telnet" cpu="1" cpulimit="0" ram="2048" ethernet="6" uuid="d5e45fd9-0086-4a62-8aaa-bc59a819a237" qemu_options="-machine type=pc,accel=kvm -nographic -rtc base=utc" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="virtio-net-pci" delay="0" icon="Switch L3.png" config="0" left="195" top="801">
+        <interface id="0" name="eth0" type="ethernet" network_id="19"/>
+        <interface id="1" name="swp1" type="ethernet" network_id="7"/>
+        <interface id="2" name="swp2" type="ethernet" network_id="6"/>
+        <interface id="3" name="swp3" type="ethernet" network_id="18"/>
+      </node>
+      <node id="12" name="srv-6" type="qemu" template="linux" image="linux-ubuntu-22.04-server" console="vnc" cpu="2" cpulimit="0" ram="4096" ethernet="3" uuid="92f96458-5cf7-45e6-b6f0-276d00631958" firstmac="00:50:01:00:0c:00" qemu_options="-machine type=pc,accel=kvm -vga std -usbdevice tablet -boot order=cd -cpu host" qemu_version="2.12.0" qemu_arch="x86_64" qemu_nic="e1000" delay="0" icon="Server.png" config="0" left="699" top="654">
+        <interface id="0" name="e0" type="ethernet" network_id="20"/>
+        <interface id="1" name="e1" type="ethernet" network_id="17"/>
+        <interface id="2" name="e2" type="ethernet" network_id="18"/>
+      </node>
+    </nodes>
+    <networks>
+      <network id="2" type="bridge" name="Net-leaf-11iface_1" left="549" top="535" visibility="0" icon="lan.png"/>
+      <network id="3" type="bridge" name="Net-leaf-12iface_1" left="747" top="526" visibility="0" icon="lan.png"/>
+      <network id="4" type="bridge" name="Net-leaf-13iface_1" left="867" top="322" visibility="0" icon="lan.png"/>
+      <network id="5" type="bridge" name="Net-leaf-14iface_1" left="816" top="133" visibility="0" icon="lan.png"/>
+      <network id="6" type="bridge" name="Net-leaf-15iface_1" left="576" top="127" visibility="0" icon="lan.png"/>
+      <network id="7" type="bridge" name="Net-leaf-6iface_1" left="438" top="331" visibility="0" icon="lan.png"/>
+      <network id="8" type="bridge" name="Net-Srv-1iface_1" left="585" top="706" visibility="0" icon="lan.png"/>
+      <network id="9" type="bridge" name="Net-Srv-1iface_2" left="585" top="706" visibility="0" icon="lan.png"/>
+      <network id="1" type="bridge" name="Net-Srv-2iface_1" left="777" top="517" visibility="0" icon="lan.png"/>
+      <network id="10" type="bridge" name="Net-Srv-2iface_2" left="777" top="517" visibility="0" icon="lan.png"/>
+      <network id="11" type="bridge" name="Net-Srv-3iface_1" left="597" top="511" visibility="0" icon="lan.png"/>
+      <network id="12" type="bridge" name="Net-Srv-3iface_2" left="597" top="511" visibility="0" icon="lan.png"/>
+      <network id="13" type="bridge" name="Net-Srv-4iface_1" left="672" top="505" visibility="0" icon="lan.png"/>
+      <network id="14" type="bridge" name="Net-Srv-4iface_2" left="897" top="622" visibility="0" icon="lan.png"/>
+      <network id="15" type="bridge" name="Net-srv-5iface_1" left="831" top="607" visibility="0" icon="lan.png"/>
+      <network id="16" type="bridge" name="Net-srv-5iface_2" left="831" top="607" visibility="0" icon="lan.png"/>
+      <network id="17" type="bridge" name="Net-srv-6iface_1" left="813" top="700" visibility="0" icon="lan.png"/>
+      <network id="18" type="bridge" name="Net-srv-6iface_2" left="813" top="700" visibility="0" icon="lan.png"/>
+      <network id="19" type="pnet9" name="Mgmt" left="306" top="681" visibility="1" icon="cloud.png"/>
+      <network id="20" type="pnet9" name="Mgmt" left="966" top="522" visibility="1" icon="cloud.png"/>
+    </networks>
+  </topology>
+</lab>

@@ -2,7 +2,6 @@ frr version 8.5.7
 frr defaults datacenter
 hostname srv-2
 log syslog informational
-no ip forwarding
 no ipv6 forwarding
 service integrated-vtysh-config
 !
